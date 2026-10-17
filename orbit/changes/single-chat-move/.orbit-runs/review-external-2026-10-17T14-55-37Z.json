@@ -1,0 +1,14 @@
+{
+  "command": "review-external",
+  "timestamp": "2026-10-17T14:55:37Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "mode": "proposal",
+  "prompt_path": "orbit/changes/single-chat-move/.orbit-runs/external-prompt-proposal-2026-10-17T14-55-13Z.md",
+  "target": "codex",
+  "final_assessment": "External review prompt packaged for single-chat-move (iter 1, mode proposal) as the external half of a launched blind pair; awaiting findings from codex.",
+  "pair": true,
+  "awaiting_findings": true,
+  "next_recommended": "Paste orbit/changes/single-chat-move/.orbit-runs/external-prompt-proposal-2026-10-17T14-55-13Z.md into the target AI, and save the response as orbit/changes/single-chat-move/.orbit-runs/external-proposal-<TS>.md"
+}
