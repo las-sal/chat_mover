@@ -1,0 +1,116 @@
+{
+  "command": "review",
+  "timestamp": "2026-10-17T20:35:25Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "mode": "system",
+  "reviewer_class": "fresh",
+  "depth": "full",
+  "flags": {
+    "parallel": false,
+    "focus": null,
+    "strict": false,
+    "fresh": true,
+    "mark": false,
+    "skip_verify": false
+  },
+  "scorecard": {
+    "completeness": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 2
+    },
+    "correctness": {
+      "critical": 0,
+      "warning": 2,
+      "suggestion": 0
+    },
+    "coherence": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 1
+    }
+  },
+  "findings": [
+    {
+      "pass": "0",
+      "severity": "WARNING",
+      "dimension": "correctness",
+      "file": "move-chat.sh",
+      "line": 181,
+      "title": "settings.json write-back replaces the target file: mode widens 600 -> 644 and a symlinked settings.json is detached",
+      "recommendation": "Write the settings back in place, as design D7 specifies (`ssh 'cat > ~/.claude/settings.json'`), so the existing inode keeps its mode and a symlink keeps pointing at its dotfile; or, if atomicity is wanted, keep the temp file but create it under `umask 077`, copy the original mode, and write through the symlink's resolved target. Add a harness check that a 600 settings.json stays 600 and a symlinked one stays a symlink.",
+      "recommendation_options": [
+        {
+          "label": "A",
+          "body": "Follow D7 literally: replace the temp+mv pipeline with `cat > ~/.claude/settings.json` on the remote (non-atomic, preserves inode, mode and symlink)."
+        },
+        {
+          "label": "B",
+          "body": "Keep the atomic temp+mv, but run it under `umask 077` with the mode copied from the original and the path resolved through any symlink first; then update D7 to describe the atomic write."
+        }
+      ],
+      "reproduction": "Using the harness's fake ssh/rsync (target home = a local dir): create target ~/.claude/settings.json = {\"cleanupPeriodDays\": 30, \"env\":{\"TOKEN\":\"x\"}} with chmod 600, run `move-chat.sh p --remote fake --yes --skip-code`; afterwards the file is -rw-r--r-- (umask 022), i.e. world-readable. Second run with ~/.claude/settings.json a symlink to ../dotfiles/settings.json (600): afterwards ~/.claude/settings.json is a regular 644 file and dotfiles/settings.json still says 30. The source machine's own ~/.claude/settings.json is mode 600, so Claude Code's default for this file is owner-only. Spec 'No overwrite on the target' permits only the cleanupPeriodDays key to change; D7 says write back with `ssh 'cat > file'`, which would have kept both mode and link."
+    },
+    {
+      "pass": "3",
+      "severity": "WARNING",
+      "dimension": "correctness",
+      "file": "move-chat.sh",
+      "line": 188,
+      "title": "Code-copy rsync destination is not quoted for the remote shell; a project path with a space fails after the chat is already copied",
+      "recommendation": "Quote the remote path the same way the mkdir step does: `\"$REMOTE:$(rq \"$REL\")/\"` (openrsync passes the remote path through the remote shell unprotected; verified that the %q form lands in `code/My App/`). The harness's fake rsync maps `fake:` paths locally and never goes through a remote shell, which is why the tests could not catch this; add a project name with a space to the harness only if the fake ssh is also used as rsync's -e transport.",
+      "reproduction": "Source rsync is openrsync (protocol 29). With a fake transport that mimics ssh (`cd $HOME && bash -c \"$*\"`): `/usr/bin/rsync -a -e ./fssh src/ \"h:code/My App/\"` exits 1 with `server receiver mode requires two argument` and copies nothing; the same call with `\"h:$(printf %q 'code/My App')/\"` exits 0 and creates `code/My App/f.txt`. In move-chat.sh this rsync is step 7, after chat data, file history and settings were already written, so the run aborts half-done. Spec 'Project code copy' places no restriction on the folder name."
+    },
+    {
+      "pass": "0",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "move-chat.sh",
+      "line": 91,
+      "title": "Confirmation does not say when the target chat directory already exists, so a merge into an existing chat is silent",
+      "recommendation": "Before the prompt, `ssh test -d` the target slug dir and, when it exists, append e.g. `(already exists: only missing files will be added; the target's memory/ wins)` to the Target chat line. If the user ever starts claude in the project on the target before moving (e.g. after a git clone, as in 5.5), the target's MEMORY.md index is kept and the source's memory files land unindexed, with nothing in the output saying so."
+    },
+    {
+      "pass": "0",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "line": 36,
+      "title": "Task 5.6 is checked although its stated procedure (a real re-run to moonlight with checksum comparison) was not performed",
+      "recommendation": "Reword 5.6 to what was actually established (the harness's re-run no-op check plus the home-env-test move leaving home-env's target chat checksum-identical), or uncheck it until a real re-run is done, so the stage's exit criterion 'Re-running the same move is a no-op' is ratified against an accurate record. The note under the task already explains the substitution; the checkbox text should match it."
+    },
+    {
+      "pass": "6",
+      "severity": "SUGGESTION",
+      "dimension": "coherence",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "line": 73,
+      "title": "Touchpoints and the proposal's Impact omit the new test harness tests/test-move-chat.sh",
+      "recommendation": "Add `tests/test-move-chat.sh` (local up-front test harness with fake ssh/rsync; tasks 5.1, 5.2, 5.6-5.8) to design.md Touchpoints and to proposal.md Impact (line 29), which currently name move-chat.sh as the only new file."
+    }
+  ],
+  "stale_suppressed": [],
+  "commentary": "The core of the change is in good shape: exact-slug selection, staging-then-rewrite, the boundary-aware byte rewrite with utime restore, symlink handling, file-history selection and the settings max() logic all match the spec and design, and the local harness passed in full on this run (bash -n clean; shellcheck not installed, so not run). Real-machine evidence in tasks 5.3-5.5 covers both target platforms.\n\nWhat the harness structurally cannot see is anything about the real remote boundary: its fake ssh and rsync turn `HOST:path` into a local path, so remote-shell word splitting and target file metadata (mode, symlinks) never get exercised. Both warnings live exactly on that boundary, and both reproduced under a slightly more faithful fake. The rest of the remote commands were checked by reading: they stay within POSIX sh, and the mkdir step already quotes with printf %q.\n\nHow this pass ran: Pass 0 ran inline in this pass instead of through a separate verify emit, using the same completeness/correctness/coherence checks, `orbit validate` (valid) and the scenario map, which reports its check as off (no scenario_map in orbit/config.yaml), so scenario-to-test tracing was not used. Pass 1 skipped: orbit/specs/ has no baseline spec. Passes 4 and 5 skipped: orbit/lenses/ does not exist. Pass 6 was an inline drift scan (dry-run/preview residue, architecture-doc vs change-artifact consistency, touchpoint coverage), not a separate audit-drift emit. Probed but not flagged: the slug substring replace on prefix-sibling text (consistent, as D3 says), the non-dict settings JSON branch (warns, which is the right call), and the target $HOME being a non-physical path (no current target does that).",
+  "passes_run": [
+    "0",
+    "2",
+    "3",
+    "6"
+  ],
+  "passes_skipped": [
+    "1",
+    "4",
+    "5"
+  ],
+  "direction": {
+    "disposition": "hold",
+    "reasoning": "The tool does what the chat-move capability asks and has been proven on both real targets, so this is close. Hold for two small fixes on the remote boundary before archiving. The settings.json write makes a file Claude Code keeps owner-only world-readable on every target whose window gets raised, which is a quiet security regression in the one place the tool is allowed to touch existing target state. D7 already describes the safer write. The unquoted code-copy path is a one-token fix. Neither needs a design change. The record touch-ups (task 5.6 wording, touchpoints) can ride along."
+  },
+  "final_assessment": "0 critical, 2 warning, 3 suggestion.",
+  "pass_genre": "REVIEW",
+  "verified_walks": [],
+  "iteration": 1,
+  "next_recommended": "/orbit:address-reviews single-chat-move"
+}
