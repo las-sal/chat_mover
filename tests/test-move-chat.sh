@@ -20,7 +20,8 @@ check() { local name="$1"; shift; if "$@"; then ok "$name"; else bad "$name"; fi
 slugify() { printf '%s' "$1" | sed 's#[^A-Za-z0-9]#-#g'; }
 snapshot() { (cd "$1" && find . -exec stat -f '%m %N' {} + | sort && find . -type f -exec shasum {} + | sort); }
 
-# ---- fake remote: HOST:path -> $TARGET_HOME/path ---------------------------
+# ---- fake remote: ssh runs the command in $TARGET_HOME; rsync is the real one,
+# using that ssh as its transport, so HOST:path goes through a remote shell ----
 mkdir -p "$T/bin"
 cat > "$T/bin/ssh" <<'EOF'
 #!/usr/bin/env bash
@@ -31,13 +32,8 @@ cd "$TARGET_HOME" && HOME="$TARGET_HOME" exec bash -c "$*"
 EOF
 cat > "$T/bin/rsync" <<'EOF'
 #!/usr/bin/env bash
-args=()
-for a in "$@"; do
-  if [[ "$a" == fake:/* ]]; then a="${a#fake:}"
-  elif [[ "$a" == fake:* ]]; then a="$TARGET_HOME/${a#fake:}"; fi
-  args+=("$a")
-done
-exec /usr/bin/rsync "${args[@]}"
+[[ "${1:-}" == --server ]] && exec /usr/bin/rsync "$@"   # the "remote" end
+exec /usr/bin/rsync -e "$(dirname "$0")/ssh" "$@"
 EOF
 chmod +x "$T/bin/ssh" "$T/bin/rsync"
 
@@ -78,6 +74,9 @@ echo "sibling" > "$FH/s9/x@v1"
 OLD=$(date -v-40d +%Y%m%d%H%M)
 find "$CHAT" "$FH" -exec touch -h -t "$OLD" {} +
 mkdir -p "$DST/code/home-env"; echo "theirs" > "$DST/code/home-env/README.md"   # pre-existing code on target
+SPACED="$SRC_HOME/code/my app"; mkdir -p "$SPACED" "$SRC_HOME/.claude/projects/$(slugify "$SPACED")"
+echo "spaced" > "$SPACED/README.md"
+echo "{\"cwd\":\"$SPACED\"}" > "$SRC_HOME/.claude/projects/$(slugify "$SPACED")/s3.jsonl"
 
 SRC_BEFORE=$(snapshot "$CHAT"; snapshot "$FH"); OUTSIDE_BEFORE=$(shasum "$T/outside.txt")
 
@@ -118,6 +117,7 @@ echo "== re-run is a no-op (5.6 locally)"
 DST_BEFORE=$(snapshot "$DST/.claude/projects"; snapshot "$DST/.claude/file-history"; snapshot "$DST/code")
 run "$DST" home-env --remote fake --yes
 check "exit 0" test "$RC" -eq 0
+check "confirmation says target chat exists" out_has "(already exists: only missing files will be added)"
 check "target chat, file history, code unchanged" \
   test "$(snapshot "$DST/.claude/projects"; snapshot "$DST/.claude/file-history"; snapshot "$DST/code")" = "$DST_BEFORE"
 
@@ -127,6 +127,16 @@ echo '{"cleanupPeriodDays": 1000, "x": 1}' > "$S"; run "$DST" home-env --remote 
 check "larger window kept" python3 -c "import json,sys; d=json.load(open('$S')); sys.exit(not (d['cleanupPeriodDays']==1000 and d['x']==1))"
 echo '{"cleanupPeriodDays": 30, "theme": "dark"}' > "$S"; run "$DST" home-env --remote fake --yes --skip-code
 check "low window raised, other keys kept" python3 -c "import json,sys; d=json.load(open('$S')); sys.exit(not (d['cleanupPeriodDays']==405 and d['theme']=='dark'))"
+echo '{"cleanupPeriodDays": 30}' > "$S"; chmod 600 "$S"; run "$DST" home-env --remote fake --yes --skip-code
+check "rewritten settings keep mode 600" test "$(stat -f %Lp "$S")" = 600
+mkdir -p "$DST/dotfiles"; mv "$S" "$DST/dotfiles/settings.json"; echo '{"cleanupPeriodDays": 30}' > "$DST/dotfiles/settings.json"
+ln -s ../dotfiles/settings.json "$S"; run "$DST" home-env --remote fake --yes --skip-code
+check "symlinked settings stay a symlink" test -L "$S"
+check "symlink target updated" python3 -c "import json,sys; sys.exit(json.load(open('$DST/dotfiles/settings.json'))['cleanupPeriodDays'] != 405)"
+rm "$S"; echo '{"cleanupPeriodDays": 30, "keep": 1}' > "$S"; chmod 000 "$S"; run "$DST" home-env --remote fake --yes --skip-code
+chmod 600 "$S"
+check "unreadable settings left unchanged" grep -qF '"keep": 1' "$S"
+check "unreadable settings warned"        out_has "Could not read"
 echo '{not json' > "$S"; run "$DST" home-env --remote fake --yes --skip-code
 check "invalid settings left unchanged" grep -qx '{not json' "$S"
 check "invalid settings warned"        out_has "not valid JSON"
@@ -139,6 +149,12 @@ check "exit 0"                 test "$RC" -eq 0
 check "no code copied"         test ! -e "$T/dst2/code"
 check "confirmation says skipped" out_has "skipped (--skip-code)"
 check "chat still copied"      test -d "$T/dst2/.claude/projects/$(slugify "$T/dst2/code/home-env")"
+
+echo "== project path with a space"
+run "$T/dst6" "my app" --remote fake --yes
+check "exit 0"                       test "$RC" -eq 0
+check "code lands in 'code/my app'"  grep -qx spaced "$T/dst6/code/my app/README.md"
+check "chat copied"                  test -f "$T/dst6/.claude/projects/$(slugify "$T/dst6/code/my app")/s3.jsonl"
 
 echo "== error paths (5.7)"
 run "$T/dst3" nochat --remote fake --yes

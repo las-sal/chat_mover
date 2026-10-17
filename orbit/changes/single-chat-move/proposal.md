@@ -27,6 +27,7 @@ Implements stage `single-chat-move` of `orbit/architecture/claude-chat-mover.md`
 ## Impact
 
 - New file: `move-chat.sh` (repo root).
+- New file: `tests/test-move-chat.sh` — the up-front test harness (fake `ssh` remote, real `rsync` over it); runs on this Mac.
 - Source machine: needs `rsync` and `python3`; read-only access to `~/.claude/projects/<slug>/`, `~/.claude/file-history/`, and the project folder; a temporary staging directory.
 - Target machine: needs `ssh` (key-based, no prompt) and `rsync`; writes under `~/.claude/projects/`, `~/.claude/file-history/`, `~/.claude/settings.json` (one key), and the project's folder under the target home.
 - No global Claude config moves (R-claude-chat-mover-7).

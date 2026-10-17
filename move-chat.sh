@@ -88,7 +88,11 @@ done
 # ---- 3. confirm -----------------------------------------------------------
 say "Moving one chat to $REMOTE"
 echo "   Source chat:     ~/.claude/projects/$OLD_SLUG  (${#SESSIONS[@]} sessions, ${#FH_DIRS[@]} with file history)"
-echo "   Target chat:     $REMOTE:~/.claude/projects/$NEW_SLUG"
+if ssh "$REMOTE" "test -d $(rq "$NEW_HOME/.claude/projects/$NEW_SLUG")"; then
+  echo "   Target chat:     $REMOTE:~/.claude/projects/$NEW_SLUG  (already exists: only missing files will be added)"
+else
+  echo "   Target chat:     $REMOTE:~/.claude/projects/$NEW_SLUG"
+fi
 if (( SKIP_CODE )); then
   echo "   Code:            skipped (--skip-code)"
 else
@@ -158,8 +162,9 @@ if (( ${#SESSIONS[@]} )); then
 else
   needed=365
 fi
-current=$(ssh "$REMOTE" 'cat ~/.claude/settings.json 2>/dev/null || true')
-updated=$(printf '%s' "$current" | python3 -c '
+# A missing file reads as empty; one that exists but can't be read is left alone.
+if current=$(ssh "$REMOTE" 'f=~/.claude/settings.json; [ ! -e "$f" ] || cat "$f"'); then
+  updated=$(printf '%s' "$current" | python3 -c '
 import json, sys
 needed, text = int(sys.argv[1]), sys.stdin.read()
 try:
@@ -174,18 +179,22 @@ else:
     d["cleanupPeriodDays"] = needed
     print(json.dumps(d, indent=2))
 ' "$needed")
+else
+  updated=UNREADABLE
+fi
 case "$updated" in
   INVALID)   warn "$REMOTE:~/.claude/settings.json is not valid JSON; set \"cleanupPeriodDays\": $needed in it by hand!" ;;
+  UNREADABLE) warn "Could not read $REMOTE:~/.claude/settings.json; left it unchanged. Set \"cleanupPeriodDays\": $needed in it by hand!" ;;
   UNCHANGED) echo "   cleanupPeriodDays already covers the moved sessions (needs >= $needed)." ;;
-  *)         printf '%s\n' "$updated" | ssh "$REMOTE" \
-               'cat > ~/.claude/settings.json.move-chat && mv ~/.claude/settings.json.move-chat ~/.claude/settings.json'
+  *)         # written in place, so the file keeps its permissions and a symlink keeps its target
+             printf '%s\n' "$updated" | ssh "$REMOTE" 'cat > ~/.claude/settings.json'
              echo "   cleanupPeriodDays = $needed  ($REMOTE:~/.claude/settings.json)" ;;
 esac
 
 # ---- 7. project code ------------------------------------------------------
 if (( ! SKIP_CODE )); then
   say "Copying $PROJECT -> $REMOTE:$NEW_PROJECT  (dependency folders excluded)"
-  rsync -a -z --ignore-existing "${EXCLUDES[@]}" "$PROJECT/" "$REMOTE:$REL/"
+  rsync -a -z --ignore-existing "${EXCLUDES[@]}" "$PROJECT/" "$REMOTE:$(rq "$REL")/"
 fi
 
 # ---- done -----------------------------------------------------------------

@@ -1,0 +1,231 @@
+{
+  "command": "address-reviews",
+  "timestamp": "2026-10-17T21:47:42Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "source": "auto-discovered",
+  "source_path": "orbit/changes/single-chat-move/.orbit-runs/review-system-2026-10-17T20-35-25Z.json",
+  "source_command": "review",
+  "source_token": "2026-10-17T20-35-25Z",
+  "latest_apply_token": "2026-10-17T20-30-18Z",
+  "walk_mode": "per_finding",
+  "input_findings_summary": {
+    "critical": 0,
+    "warning": 2,
+    "suggestion": 3
+  },
+  "pushback_verification": "All five verified against current state (code read at move-chat.sh:91/161/181/188, tasks.md 5.6, design Touchpoints); none stale. Touchpoints part of the last finding declined: Touchpoints are frozen once apply begins.",
+  "resolution_summary": {
+    "resolved": 5,
+    "stale_suppressed": 0,
+    "deferred": 0,
+    "escalated": 0
+  },
+  "resolutions": [
+    {
+      "severity": "WARNING",
+      "title": "settings.json write-back replaces the target file: mode widens 600 -> 644 and a symlinked settings.json is detached",
+      "marker_source": "internal-review",
+      "file": "move-chat.sh",
+      "line": 181,
+      "classification": "decision_required",
+      "action": "Option A: the settings are written back in place with ssh 'cat > ~/.claude/settings.json', as D7 specifies, so mode and symlink are kept and no temp file exists. Spec Session retention now requires the in-place write with two new scenarios; harness checks a 600 file stays 600 and a symlinked one stays a symlink with its target updated (mutation-checked against the old temp+mv).",
+      "recommendation_fork": {
+        "source": "structured",
+        "options": [
+          "A",
+          "B"
+        ],
+        "selected": "A"
+      },
+      "ratified_via": "chat",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/tasks.md",
+          "tests/test-move-chat.sh"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "settings.json.move-chat"
+        ],
+        "introduced": [
+          {
+            "path": "move-chat.sh",
+            "text": "ssh \"$REMOTE\" 'cat > ~/.claude/settings.json'"
+          },
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "The tool SHALL write the file in place"
+          },
+          {
+            "path": "tests/test-move-chat.sh",
+            "text": "rewritten settings keep mode 600"
+          }
+        ],
+        "searched": [
+          "settings.json",
+          "mv ~/.claude",
+          "temp"
+        ],
+        "scope": [
+          "orbit/changes/single-chat-move/proposal.md"
+        ],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Code-copy rsync destination is not quoted for the remote shell; a project path with a space fails after the chat is already copied",
+      "marker_source": "internal-review",
+      "file": "move-chat.sh",
+      "line": 188,
+      "classification": "trivial_fix",
+      "action": "Destination is now \"$REMOTE:$(rq \"$REL\")/\". The harness's fake rsync now runs the real /usr/bin/rsync with the fake ssh as transport, and a project 'my app' lands intact (fails when the quoting is reverted). Spec Project code copy and design D6 say the destination is quoted.",
+      "ripple_cascade": {
+        "applied": [
+          "tests/test-move-chat.sh",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/tasks.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "\"$REMOTE:$REL/\"",
+          "fake:/*"
+        ],
+        "introduced": [
+          {
+            "path": "move-chat.sh",
+            "text": "\"$REMOTE:$(rq \"$REL\")/\""
+          },
+          {
+            "path": "tests/test-move-chat.sh",
+            "text": "code lands in 'code/my app'"
+          }
+        ],
+        "searched": [
+          "$REMOTE:",
+          "rq "
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Confirmation does not say when the target chat directory already exists, so a merge into an existing chat is silent",
+      "marker_source": "internal-review",
+      "file": "move-chat.sh",
+      "line": 91,
+      "classification": "trivial_fix",
+      "action": "Before the prompt the tool runs ssh test -d on the target slug dir and, when present, adds '(already exists: only missing files will be added)' to the Target chat line. Spec Confirmation requirement + scenario, design D8, task 2.3 and a harness re-run check updated.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/tasks.md",
+          "tests/test-move-chat.sh"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "move-chat.sh",
+            "text": "(already exists: only missing files will be added)"
+          },
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "Target chat already present"
+          }
+        ],
+        "searched": [
+          "Target chat"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Task 5.6 is checked although its stated procedure (a real re-run to moonlight with checksum comparison) was not performed",
+      "marker_source": "internal-review",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "line": 36,
+      "classification": "trivial_fix",
+      "action": "5.6 reworded to what was established: the harness's re-run check plus the home-env-test move leaving the home-env chat on moonlight checksum-identical; says a real re-run of 5.3 was not done.",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "Re-run 5.3's move to moonlight"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "A real re-run of 5.3 was not done"
+          }
+        ],
+        "searched": [
+          "5.6",
+          "re-run"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Touchpoints and the proposal's Impact omit the new test harness tests/test-move-chat.sh",
+      "marker_source": "internal-review",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "line": 73,
+      "classification": "trivial_fix",
+      "action": "Proposal Impact now names tests/test-move-chat.sh. Touchpoints left as is: the predicted map is frozen once apply begins, and predicted-vs-actual divergence is audit-drift's computed check.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/proposal.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/proposal.md",
+            "text": "New file: `tests/test-move-chat.sh`"
+          }
+        ],
+        "searched": [
+          "test-move-chat"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    }
+  ],
+  "final_assessment": "All five findings resolved: the settings write is back to D7's in-place cat, the code-copy destination is quoted for the remote shell, the confirmation flags an existing target chat, task 5.6 says what was established, and the proposal names the harness; the harness now runs real rsync over the fake ssh so the remote boundary is exercised.",
+  "iteration": 4,
+  "next_recommended": "/orbit:address-reviews single-chat-move",
+  "ripple_misses": 0
+}

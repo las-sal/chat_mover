@@ -7,7 +7,7 @@
 
 - [x] 2.1 Preflight: `rsync` and `python3` on the source; `ssh -o BatchMode=yes` reachability with the seed's fix-it message; read `NEW_HOME`; `rsync` on the target; warn if a `claude` process is running locally
 - [x] 2.2 Compute `NEW_SLUG` from the target project path (`$NEW_HOME/<path relative to $HOME>`) and collect the chat: session uuids (`*.jsonl` directly in the slug dir) and existing `file-history/<uuid>` dirs (D5)
-- [x] 2.3 Print the source chat dir, target chat dir (`<host>:~/.claude/projects/$NEW_SLUG`), source/target project folders or "code skipped", the session count, and the note that already-copied transcripts are not updated on re-run; ask `Proceed? [y/N]` (`y`/`Y` only) unless `--yes` (D8)
+- [x] 2.3 Print the source chat dir, target chat dir (`<host>:~/.claude/projects/$NEW_SLUG`), source/target project folders or "code skipped", the session count, a note when the target chat dir already exists, and the note that already-copied transcripts are not updated on re-run; ask `Proceed? [y/N]` (`y`/`Y` only) unless `--yes` (D8)
 - [x] 2.4 Reject a target whose `$HOME` does not read back as a clean absolute path (no control characters): exit before copying, explaining that its shell prints output for non-interactive ssh and to guard that output with `[[ $- == *i* ]]`
 
 ## 3. Stage and rewrite
@@ -19,8 +19,8 @@
 
 - [x] 4.1 `ssh mkdir -p` the target's `~/.claude/projects`, `~/.claude/file-history` and (unless `--skip-code`) the target project's parent directory; `rsync -a -z --ignore-existing` the staged slug dir to `~/.claude/projects/`
 - [x] 4.2 `rsync -a -z --ignore-existing` each selected `~/.claude/file-history/<uuid>/` verbatim (D4, D5)
-- [x] 4.3 `cleanupPeriodDays` guard (D7): fetch target `settings.json` via `ssh cat` (missing/empty → `{}`); `needed` = oldest moved transcript's age in days + 365; set `max(existing, needed)` with `python3` keeping other keys; write back only if changed; non-empty unparseable → warn, leave untouched
-- [x] 4.4 Unless `--skip-code`: `rsync -a -z --ignore-existing` the project folder with the excludes to the same home-relative path on the target (D6)
+- [x] 4.3 `cleanupPeriodDays` guard (D7): fetch target `settings.json` via `ssh` (missing/empty → `{}`; exists but unreadable → warn, leave untouched); `needed` = oldest moved transcript's age in days + 365; set `max(existing, needed)` with `python3` keeping other keys; write back in place with `cat >` only if changed (keeps mode and symlink); non-empty unparseable → warn, leave untouched
+- [x] 4.4 Unless `--skip-code`: `rsync -a -z --ignore-existing` the project folder with the excludes to the same home-relative path on the target, the remote path quoted with `rq` (D6)
 - [x] 4.5 Print next steps: `cd <target project> && claude --resume`, reinstall dependencies, trust the folder on first launch, check project `.claude/` / `CLAUDE.md` for old-home paths
 
 ## 5. Up-front tests (stage exit criteria — run once, not per move)
@@ -33,7 +33,8 @@
   - 2026-10-17: done. The user resumed the chat on moonlight with history and memory. 15 of 18 home-env chat files were byte-identical to the source; the other 3 had been changed by the resumed session. The home-env-test move was byte-identical for chat and file history, with every mtime kept.
 - [x] 5.5 Real move of `orbit-spec` to starlight (Fedora, `/home/sal`): `claude --resume` in `~/code/orbit-spec` lists its sessions, opens one with full history and paths under `/home/sal`, memory is loaded, and moved transcripts keep their source mtimes
   - 2026-10-17: done with `--skip-code`; the repo was git-cloned to `~/code/orbit-spec` and the user resumed the chat there. Checked: all 89 transcripts have cwd `/home/sal/code/orbit-spec`, no file contains `/Users/sal/` or the old slug, and every file kept its source mtime.
-- [x] 5.6 Re-run 5.3's move to moonlight: no chat data, file history or code copied, and those unchanged on the target; source slug dir unchanged (compare checksums and mtimes before/after)
+- [x] 5.6 Re-run is a no-op: the harness's re-run check (no chat data, file history or code copied; target unchanged by checksums and mtimes), plus a real move of `home-env-test` to moonlight leaving the existing `home-env` chat there checksum-identical. A real re-run of 5.3 was not done (user's call)
   - 2026-10-17: the real re-run was skipped at the user's request, because home-env was live on moonlight. Re-run behaviour is covered by the harness's "re-run is a no-op" check, and the home-env-test move left the existing home-env chat on moonlight untouched.
 - [x] 5.7 Error and edge paths: unknown project and a project outside `$HOME` exit non-zero with nothing copied; answering `n` at the prompt copies nothing; an existing different `~/code/<project>/README.md` on the target is kept; target `settings.json` absent, below the needed window, above it, and non-empty invalid JSON each behave per the Session retention requirement
 - [x] 5.8 Harness: a fake remote whose shell prints a title escape before every command makes the tool exit non-zero with the clean-output message and copy nothing
+- [x] 5.9 Harness, remote boundary: `rsync` runs for real over the fake `ssh`, so remote paths go through a shell. A project `~/code/my app` lands intact; a 600 `settings.json` stays 600; a symlinked one stays a symlink with its target updated; an unreadable one is left unchanged with a warning; a re-run's confirmation says the target chat already exists

@@ -31,11 +31,15 @@ The moved chat SHALL consist of: every file and directory inside the selected sl
 - **THEN** the source's `~/.claude/CLAUDE.md`, `skills/`, `commands/`, `agents/`, `history.jsonl` and `settings.json` are not copied to the target
 
 ### Requirement: Confirmation before copying
-After preflight and before copying anything, the tool SHALL print the source chat directory, the target chat directory (`<host>:~/.claude/projects/<target slug>`), the source and target project folders (or that code is skipped), and the number of sessions. Unless `--yes` is given, the tool SHALL then ask for confirmation and SHALL proceed only when the answer is `y` or `Y`. The tool SHALL have no dry-run mode.
+After preflight and before copying anything, the tool SHALL print the source chat directory, the target chat directory (`<host>:~/.claude/projects/<target slug>`), the source and target project folders (or that code is skipped), and the number of sessions. When the target chat directory already exists, the target line SHALL say so and that only missing files will be added. Unless `--yes` is given, the tool SHALL then ask for confirmation and SHALL proceed only when the answer is `y` or `Y`. The tool SHALL have no dry-run mode.
 
 #### Scenario: Directories shown before copying
 - **WHEN** the user runs `move-chat.sh home-env --remote fedora` and the target home is `/home/sal`
 - **THEN** before any copy the tool prints `~/.claude/projects/-Users-sal-code-home-env` as the source and `fedora:~/.claude/projects/-home-sal-code-home-env` as the target
+
+#### Scenario: Target chat already present
+- **WHEN** the target already has `~/.claude/projects/<target slug>`
+- **THEN** the confirmation's target line says it already exists and only missing files will be added
 
 #### Scenario: Declined confirmation
 - **WHEN** the user runs without `--yes` and answers anything other than `y` or `Y` at the prompt
@@ -73,7 +77,7 @@ The tool SHALL rewrite, in every moved regular file under the slug directory, ea
 - **THEN** every file in the source slug directory has the same contents and times as before the run
 
 ### Requirement: Project code copy
-Unless `--skip-code` is given, the tool SHALL copy the project folder to the same path relative to home on the target (e.g. `~/code/home-env`), creating its parent directories when absent, including `.git` and untracked files, excluding `node_modules`, `.venv`, `venv`, `__pycache__` and `.DS_Store`. Code SHALL NOT be path-rewritten. When `--skip-code` is given the project folder SHALL NOT be copied.
+Unless `--skip-code` is given, the tool SHALL copy the project folder to the same path relative to home on the target (e.g. `~/code/home-env`), creating its parent directories when absent and quoting the destination for the target's shell so a folder name with spaces arrives intact, including `.git` and untracked files, excluding `node_modules`, `.venv`, `venv`, `__pycache__` and `.DS_Store`. Code SHALL NOT be path-rewritten. When `--skip-code` is given the project folder SHALL NOT be copied.
 
 #### Scenario: Code copied with exclusions
 - **WHEN** the project contains `.git/` and `node_modules/`
@@ -82,6 +86,10 @@ Unless `--skip-code` is given, the tool SHALL copy the project folder to the sam
 #### Scenario: Missing parent on the target
 - **WHEN** the target has no `~/code` directory
 - **THEN** the move creates `~/code/` and copies the project into `~/code/<name>`
+
+#### Scenario: Folder name with a space
+- **WHEN** the project folder is `~/code/my app`
+- **THEN** the target holds the project's files under `~/code/my app/`
 
 #### Scenario: Skip code
 - **WHEN** the user passes `--skip-code`
@@ -99,7 +107,7 @@ The tool SHALL NOT overwrite or delete any existing chat data, file history or c
 - **THEN** the target's `README.md` is unchanged after the move
 
 ### Requirement: Session retention on the target
-Directly after copying chat data and file history, and before copying code, the tool SHALL ensure the target's `~/.claude/settings.json` has `cleanupPeriodDays` of at least the age in days of the oldest moved session transcript plus 365, keeping an existing larger value and every other key. A missing or empty file SHALL be treated as `{}` and written. If the existing file is non-empty and cannot be parsed as JSON the tool SHALL leave it unchanged and print a warning telling the user to set the value by hand.
+Directly after copying chat data and file history, and before copying code, the tool SHALL ensure the target's `~/.claude/settings.json` has `cleanupPeriodDays` of at least the age in days of the oldest moved session transcript plus 365, keeping an existing larger value and every other key. A missing or empty file SHALL be treated as `{}` and written. If the existing file cannot be read, or is non-empty and cannot be parsed as JSON, the tool SHALL leave it unchanged and print a warning telling the user to set the value by hand. The tool SHALL write the file in place, so it keeps its permissions and, when it is a symbolic link, the link and its target.
 
 #### Scenario: Low cleanup window raised
 - **WHEN** the oldest moved session is 40 days old and the target's settings have `cleanupPeriodDays` absent or below 405
@@ -112,6 +120,14 @@ Directly after copying chat data and file history, and before copying code, the 
 #### Scenario: Missing settings
 - **WHEN** the target has no `~/.claude/settings.json`
 - **THEN** after the move it exists and contains the computed `cleanupPeriodDays`
+
+#### Scenario: Permissions and symlink kept
+- **WHEN** the target's `settings.json` has mode 600, or is a symlink to a dotfiles copy, and its window is raised
+- **THEN** afterwards it still has mode 600, or is still the symlink and the dotfiles copy holds the new value
+
+#### Scenario: Unreadable settings
+- **WHEN** the target's `settings.json` exists but cannot be read
+- **THEN** the file is unchanged and a warning is printed
 
 #### Scenario: Unparseable settings
 - **WHEN** the target's `settings.json` is non-empty and not valid JSON

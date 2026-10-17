@@ -1,0 +1,151 @@
+{
+  "command": "address-reviews",
+  "timestamp": "2026-10-17T21:48:01Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "source": "auto-discovered",
+  "source_path": "orbit/changes/single-chat-move/.orbit-runs/external-system-2026-10-17T20-35-54Z.md",
+  "source_command": null,
+  "source_token": "2026-10-17T20-35-54Z",
+  "latest_apply_token": "2026-10-17T20-30-18Z",
+  "external_reviewer": "GPT-6",
+  "walk_mode": "per_finding",
+  "input_findings_summary": {
+    "critical": 0,
+    "warning": 4,
+    "suggestion": 0
+  },
+  "pushback_verification": "All four verified against current state; one converged with the fresh half (walked in its log). The scenario-map finding and the fresh pass's report of the check as off were tested at triage: orbit status --scenarios reports check off and every scenario uncovered, so both observations hold.",
+  "resolution_summary": {
+    "resolved": 3,
+    "stale_suppressed": 1,
+    "deferred": 0,
+    "escalated": 0
+  },
+  "resolutions": [
+    {
+      "severity": "WARNING",
+      "title": "Scenario coverage is absent from the scenario map",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "line": 26,
+      "classification": "decision_required",
+      "action": "No edit. The project has the scenario check off (orbit status --scenarios: \"check\": \"off\"; default test glob test/**/*.test.ts matches no bash harness). Coverage evidence stays in tasks.md 5.x and tests/test-move-chat.sh; registering bash scenarios would be new mechanism for its own exploration.",
+      "ratified_via": "chat",
+      "resolution": "A: resolve with no change; the scenario check is off by project configuration",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [],
+        "searched": [
+          "scenario_map",
+          "--scenarios"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Remote code destination is not shell-quoted",
+      "marker_source": "external",
+      "file": "move-chat.sh",
+      "line": 188,
+      "classification": "stale",
+      "action": "converged with the fresh half's code-copy quoting finding, walked in its log",
+      "evidence": "resolved in address-reviews-2026-10-17T21-47-42Z (the earlier pass's log): destination is now \"$REMOTE:$(rq \"$REL\")/\" and the harness moves a 'my app' project through real rsync",
+      "outcome": "stale"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Settings read errors are treated as missing settings",
+      "marker_source": "external",
+      "file": "move-chat.sh",
+      "line": 161,
+      "classification": "trivial_fix",
+      "action": "The read is now ssh 'f=~/.claude/settings.json; [ ! -e \"$f\" ] || cat \"$f\"': a missing file reads as {}, a file that exists but cannot be read leaves settings untouched with a warning to set the value by hand. Spec Session retention, design D7 and task 4.3 updated; harness check with a chmod 000 settings file (fails when the old read is restored).",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/tasks.md",
+          "tests/test-move-chat.sh"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "2>/dev/null || true"
+        ],
+        "introduced": [
+          {
+            "path": "move-chat.sh",
+            "text": "updated=UNREADABLE"
+          },
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "#### Scenario: Unreadable settings"
+          },
+          {
+            "path": "tests/test-move-chat.sh",
+            "text": "unreadable settings warned"
+          }
+        ],
+        "searched": [
+          "settings.json",
+          "cat ~/.claude"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Concurrent moves can lose settings or fail after transferring chat data",
+      "marker_source": "external",
+      "file": "move-chat.sh",
+      "line": 180,
+      "classification": "decision_required",
+      "action": "The shared settings.json.move-chat temp file is gone with the in-place write (fresh pass's settings finding, option A). No lock added: moves are run by hand one at a time; the remaining read-modify-write race (last writer's window wins, still at least what that run needed) is named in design Risks.",
+      "ratified_via": "chat",
+      "resolution": "A: covered by the in-place write; the remaining race is documented in Risks, not locked",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "settings.json.move-chat"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "[Two moves to the same target at once]"
+          }
+        ],
+        "searched": [
+          "concurrent",
+          "temp"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    }
+  ],
+  "final_assessment": "All four findings closed: the quoting finding converged with the fresh half and was walked there; settings read errors now leave the file alone with a warning; concurrent-move settings loss is covered by the in-place write with the remaining race named in Risks; scenario coverage needs no change because the scenario check is off for this project.",
+  "iteration": 5,
+  "next_recommended": "/orbit:review --as system single-chat-move",
+  "ripple_misses": 0
+}
