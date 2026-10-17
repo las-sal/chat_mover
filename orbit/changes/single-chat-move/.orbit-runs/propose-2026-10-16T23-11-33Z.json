@@ -1,0 +1,9 @@
+{
+  "command": "propose",
+  "timestamp": "2026-10-16T23:11:33Z",
+  "change": "single-chat-move",
+  "kind": "workflow",
+  "model": "claude-opus-5-5",
+  "final_assessment": "Standalone propose for single-chat-move (cites claude-chat-mover / single-chat-move). Created proposal, design (D1-D8, Touchpoints), chat-move spec (8 requirements, ADDED only), and 18 tasks. Validates non-strict; no size ceiling configured.",
+  "next_recommended": "/orbit:review single-chat-move — proposal artifacts ready; review before apply"
+}

@@ -1,0 +1,6 @@
+schema: spec-driven
+created: 2026-10-16
+schema_version: 5
+architecture:
+  doc: claude-chat-mover
+  stage: single-chat-move
