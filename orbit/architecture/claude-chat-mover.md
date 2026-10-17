@@ -35,6 +35,7 @@ Grounding — what a chat is on disk (observed 2026-10-16 on this MacBook, Claud
 - **R-claude-chat-mover-6** (user, 2026-10-16) — Move everything that makes sense, project code included (dependency/build folders excluded); `--skip-code` skips the code, since it can be re-pulled from GitHub. Resolves OQ-2.
 - **R-claude-chat-mover-7** (user, 2026-10-16) — Global Claude config (`~/.claude/CLAUDE.md`, skills, commands, agents, settings) is out of scope; project-scoped config travels with the code. Resolves OQ-3.
 - **R-claude-chat-mover-8** (user, 2026-10-17) — No dry-run mode. Test the tool once, up front, instead of previewing every move; each run just finds and confirms the source and target directories before copying.
+- **R-claude-chat-mover-9** (user, 2026-10-17) — The target is chosen per move with `--remote`; the tool keeps no project-to-machine mapping. Rule of thumb: projects with a major Apple/Swift component (e.g. `home-env`) go to moonlight.home (Mac mini); general projects go to starlight.home (Fedora desktop).
 
 ## Program stages
 
@@ -72,6 +73,8 @@ _None open._ OQ-1..OQ-3 resolved 2026-10-16 by R-claude-chat-mover-5..7.
 - **Moving all chats at once** (the seed example's behavior) — out by R-claude-chat-mover-1 (2026-10-16): one chat per run, nothing else analyzed.
 - **A single session as the unit** (2026-10-16) — out by R-claude-chat-mover-5: memory is per-project, so the project folder is the unit.
 - **Moving global Claude config** (seed example step "global items" + staged `settings.json`) — out by R-claude-chat-mover-7 (2026-10-16): not owned by any one chat. The only target-side settings touch kept is the `cleanupPeriodDays` guard, which protects the moved sessions.
+- **A project-to-target mapping file** (e.g. `targets.conf` with `home-env=moonlight`, `default=starlight`; 2026-10-17) — deferred by R-claude-chat-mover-9: with a handful of projects, choosing `--remote` per move is enough. Re-entry: the user finds themselves moving many projects or wants the rule written down rather than remembered.
+- **Auto-detecting the target from the project** (e.g. `Package.swift` / `*.xcodeproj` → moonlight; 2026-10-17) — out: a guess that misroutes mixed repos, against R-claude-chat-mover-4.
 - **Pull instead of push** (user, 2026-10-17) — running the tool on the target and pulling from the MacBook was considered and declined: it needs the MacBook awake and running an ssh server, needs `python3` on the target (the Mac mini lacks it without the Xcode tools), and reworks the script's local reads. Push stays: the tool runs on the MacBook; targets need only an ssh server and `rsync` (R-claude-chat-mover-2).
 - **Rewriting scratchpad/temp paths** (2026-10-16) — transcripts also record macOS temp cwds like `/private/tmp/claude-501/<slug>/<uuid>/scratchpad/…`; these are dead scratch locations on any other machine, so they are left as-is rather than remapped.
 
@@ -81,3 +84,4 @@ _None open._ OQ-1..OQ-3 resolved 2026-10-16 by R-claude-chat-mover-5..7.
 - 2026-10-16 — Premise, goals, rulings R-1..R-4, stage `single-chat-move` and open questions OQ-1..OQ-3 captured from the user's brief and an on-disk survey of `~/.claude`.
 - 2026-10-16 — OQ-1..OQ-3 resolved as R-claude-chat-mover-5..7; `single-chat-move` scope updated (exact slug match, code copy with `--skip-code`).
 - 2026-10-17 — R-claude-chat-mover-8 captured during the proposal-review walk of `single-chat-move` (dry-run mode dropped; up-front tests instead); stage scope, Goal 4 and exit criteria updated to match.
+- 2026-10-17 — R-claude-chat-mover-9 captured (target chosen per move; Apple/Swift → moonlight, general → starlight); mapping file deferred, auto-detection out. Real-machine tests retargeted to match: home-env → moonlight, orbit-spec → starlight.
