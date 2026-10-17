@@ -1,0 +1,104 @@
+{
+  "command": "address-reviews",
+  "timestamp": "2026-10-17T15:19:36Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "source": "auto-discovered",
+  "source_path": "orbit/changes/single-chat-move/.orbit-runs/review-proposal-2026-10-17T15-18-39Z.json",
+  "source_command": "review",
+  "source_token": "2026-10-17T15-18-39Z",
+  "latest_apply_token": null,
+  "external_reviewer": null,
+  "walk_mode": "per_finding",
+  "input_findings_summary": {
+    "critical": 0,
+    "warning": 0,
+    "suggestion": 2
+  },
+  "pushback_verification": "Both verified against current tasks.md:32 and spec.md:36-38; neither stale.",
+  "resolution_summary": {
+    "resolved": 2,
+    "stale_suppressed": 0,
+    "deferred": 0,
+    "escalated": 0
+  },
+  "resolutions": [
+    {
+      "severity": "SUGGESTION",
+      "title": "Re-run test expects an unchanged target, but the retention window moves with session age",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 32,
+      "classification": "trivial_fix",
+      "action": "Task 5.6 now says chat data, file history and code are unchanged on the target, matching the spec's Re-run scenario; the permitted settings write is no longer forbidden.",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "code copied, target unchanged;"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "and those unchanged on the target"
+          }
+        ],
+        "searched": [
+          "target unchanged",
+          "unchanged"
+        ],
+        "scope": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "kept": []
+      },
+      "ripple_miss_of": {
+        "walk": "2026-10-17T15-17-02Z",
+        "title": "A fixed 365-day retention window does not protect every moved session",
+        "file": "orbit/changes/single-chat-move/design.md",
+        "kind": "query"
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "'Directories shown' scenario assumes the target home without stating it",
+      "marker_source": "internal-review",
+      "file": "specs/chat-move/spec.md",
+      "line": 36,
+      "classification": "trivial_fix",
+      "action": "Added 'and the target home is `/home/sal`' to the scenario's WHEN.",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "`move-chat.sh home-env --remote fedora` and the target home is `/home/sal`"
+          }
+        ],
+        "searched": [
+          "-home-sal-code-home-env",
+          "target home"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    }
+  ],
+  "remaining_markers_in_scope": 0,
+  "persisted_escalations": [],
+  "final_assessment": "Both suggestions of the verification pass resolved with one-line wording fixes.",
+  "iteration": 3,
+  "next_recommended": "/orbit:apply single-chat-move — user-invoked",
+  "ripple_misses": 1
+}

@@ -1,0 +1,168 @@
+{
+  "command": "address-reviews",
+  "timestamp": "2026-10-17T15:17:02Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "source": "auto-discovered",
+  "source_path": "orbit/changes/single-chat-move/.orbit-runs/external-proposal-2026-10-17T14-59-36Z.md",
+  "source_command": null,
+  "source_token": "2026-10-17T14-59-36Z",
+  "latest_apply_token": null,
+  "external_reviewer": "GPT-6",
+  "walk_mode": "per_finding",
+  "input_findings_summary": {
+    "critical": 0,
+    "warning": 4,
+    "suggestion": 1
+  },
+  "pushback_verification": "All 5 verified against current artifacts and live ~/.claude (no symlinks today; oldest session 2026-09-17); 2 converged with the fresh pass.",
+  "resolution_summary": {
+    "resolved": 3,
+    "stale_suppressed": 2,
+    "deferred": 0,
+    "escalated": 0
+  },
+  "resolutions": [
+    {
+      "severity": "WARNING",
+      "title": "Outside-home projects have no defined target path",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "line": 49,
+      "classification": "stale",
+      "action": "converged with the fresh pass's 'No target project path or NEW_SLUG for a project outside $HOME under --skip-code', walked in its log",
+      "evidence": "resolved in address-reviews-2026-10-17T15-16-42Z (the earlier pass's log): outside-home projects refused whatever the flags",
+      "outcome": "stale"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Staging needs an explicit symlink policy",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "line": 36,
+      "classification": "trivial_fix",
+      "action": "Staging copies symlinks as links (rsync -a); the rewriter skips links (os.path.islink) and never opens them; the tool warns naming them; spec adds 'Symlink not followed'; fixture 5.2 checks the referent is unchanged.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/tasks.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "Scenario: Symlink not followed"
+          },
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "os.path.islink"
+          }
+        ],
+        "searched": [
+          "symlink",
+          "link"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "The no-overwrite contract contradicts the settings update",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+      "line": 75,
+      "classification": "stale",
+      "action": "converged with the fresh pass's ''No overwrite on the target' contradicts the settings.json write', walked in its log",
+      "evidence": "resolved in address-reviews-2026-10-17T15-16-42Z (the earlier pass's log): cleanupPeriodDays named as the single permitted write",
+      "outcome": "stale"
+    },
+    {
+      "severity": "WARNING",
+      "title": "A fixed 365-day retention window does not protect every moved session",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "line": 52,
+      "classification": "decision_required",
+      "action": "Applied A: cleanupPeriodDays = max(existing, oldest moved transcript's age in days + 365), with file times preserved; spec retention requirement and scenarios, D7, task 4.3, 5.7 and the stage scope updated.",
+      "ratified_via": "chat",
+      "resolution": "3:A — set the window to the larger of the existing value and the oldest moved session's age plus 365 days",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/tasks.md",
+          "orbit/changes/single-chat-move/proposal.md",
+          "orbit/architecture/claude-chat-mover.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "`max(existing, 365)`",
+          "raise to ≥365 locally",
+          "cleanupPeriodDays` of at least 365"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "oldest moved session transcript plus 365"
+          }
+        ],
+        "searched": [
+          "365",
+          "cleanupPeriodDays"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Verification does not cover both targets’ dry-run exit criterion",
+      "marker_source": "external",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "line": 29,
+      "classification": "trivial_fix",
+      "action": "The dry-run exit criterion is gone (R-claude-chat-mover-8); both targets are covered by the up-front real-move tests 5.3–5.5 (Mac mini: 5.5 repeats 5.3–5.4).",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "--dry-run`: plan lists only"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "same checks as 5.3–5.4"
+          }
+        ],
+        "searched": [
+          "dry-run",
+          "Mac mini"
+        ],
+        "scope": [
+          "orbit/architecture/claude-chat-mover.md"
+        ],
+        "kept": []
+      },
+      "remedy": "descope",
+      "outcome": "resolved"
+    }
+  ],
+  "remaining_markers_in_scope": 0,
+  "persisted_escalations": [],
+  "final_assessment": "All 5 codex findings closed: 2 converged with the fresh pass and closed in its log, 2 resolved (symlink policy; retention window from the oldest session), 1 descoped with the dry-run mode.",
+  "iteration": 2,
+  "next_recommended": "/orbit:review --as proposal single-chat-move",
+  "ripple_misses": 0
+}

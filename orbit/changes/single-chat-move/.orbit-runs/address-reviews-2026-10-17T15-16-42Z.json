@@ -1,0 +1,563 @@
+{
+  "command": "address-reviews",
+  "timestamp": "2026-10-17T15:16:42Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "source": "auto-discovered",
+  "source_path": "orbit/changes/single-chat-move/.orbit-runs/review-proposal-2026-10-17T14-59-14Z.json",
+  "source_command": "review",
+  "source_token": "2026-10-17T14-59-14Z",
+  "latest_apply_token": null,
+  "external_reviewer": null,
+  "walk_mode": "per_finding",
+  "input_findings_summary": {
+    "critical": 0,
+    "warning": 6,
+    "suggestion": 8
+  },
+  "pushback_verification": "All 14 verified against current artifacts; none stale. Live ~/.claude checked for the inventory finding (session-env/<uuid> is the only other uuid-keyed store).",
+  "resolution_summary": {
+    "resolved": 14,
+    "stale_suppressed": 0,
+    "deferred": 0,
+    "escalated": 0
+  },
+  "resolutions": [
+    {
+      "severity": "WARNING",
+      "title": "'No overwrite on the target' contradicts the settings.json write",
+      "marker_source": "internal-review",
+      "file": "specs/chat-move/spec.md",
+      "line": 75,
+      "classification": "trivial_fix",
+      "action": "No-overwrite requirement now covers chat data, file history and code, and names the cleanupPeriodDays key as the single permitted write to an existing target file; proposal and D7 say the same.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/proposal.md",
+          "orbit/changes/single-chat-move/design.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "Never overwrites anything on the target",
+          "SHALL NOT overwrite or delete any existing file on the target"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "The single permitted change to an existing target file"
+          }
+        ],
+        "searched": [
+          "overwrite",
+          "never overwrites"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Neither staging nor the rewrite says to preserve file mtimes",
+      "marker_source": "internal-review",
+      "file": "design.md",
+      "line": 36,
+      "classification": "trivial_fix",
+      "action": "D2 stages with local rsync -a (times kept); D3 restores atime/mtime with os.utime; spec adds 'File times kept'; tasks 3.1/3.2/5.2/5.4/5.6 check it.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/tasks.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "Copy the slug dir into a `mktemp -d` staging dir"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "os.utime"
+          }
+        ],
+        "searched": [
+          "mtime",
+          "staging",
+          "cp -R"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Code copy does not create the target project's parent directory",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 19,
+      "classification": "trivial_fix",
+      "action": "Task 4.1 and D6 mkdir -p the target project's parent; spec adds 'Missing parent on the target'.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "`ssh mkdir -p` the target's `~/.claude/projects` and `~/.claude/file-history`;"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "the target project's parent directory"
+          }
+        ],
+        "searched": [
+          "mkdir",
+          "mkpath"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "No target project path or NEW_SLUG for a project outside $HOME under --skip-code",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 9,
+      "classification": "decision_required",
+      "action": "Applied option A: a project outside $HOME is refused whatever the flags; spec selection requirement, D1, D6, task 1.2 and the stage scope updated.",
+      "ratified_via": "chat",
+      "recommendation_fork": {
+        "detected": true,
+        "source": "structured",
+        "options_presented": [
+          {
+            "label": "A",
+            "body": "Refuse any project outside $HOME, even with --skip-code."
+          },
+          {
+            "label": "B",
+            "body": "Keep the absolute project path unchanged on the target."
+          }
+        ],
+        "chosen": "A"
+      },
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/proposal.md",
+          "orbit/architecture/claude-chat-mover.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "exits with an error unless `--skip-code` is given",
+          "refuse a project outside `$HOME` unless `--skip-code`"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "whatever other flags are given"
+          }
+        ],
+        "searched": [
+          "outside `$HOME`",
+          "outside home"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "Spec's home-path boundary set omits the backslash that D3 includes",
+      "marker_source": "internal-review",
+      "file": "specs/chat-move/spec.md",
+      "line": 41,
+      "classification": "trivial_fix",
+      "action": "Spec lists `/`, `\"`, `'`, whitespace, `\\`, end of text; added 'Escaped occurrence' scenario; fixture 5.2 includes an escaped case.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/tasks.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "followed by `/`, a quote, whitespace, or end of text"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "Scenario: Escaped occurrence"
+          }
+        ],
+        "searched": [
+          "boundary",
+          "a quote"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "WARNING",
+      "title": "A counts-only plan cannot meet the stage's 'exact file set' exit criterion",
+      "marker_source": "internal-review",
+      "file": "specs/chat-move/spec.md",
+      "line": 30,
+      "classification": "decision_required",
+      "action": "Off-menu: dry-run mode dropped (ruling R-claude-chat-mover-8). Plan requirement replaced by 'Confirmation before copying' (source/target directories, session count, y/N); prefix-sibling check becomes the up-front real-move test 5.3; stage exit criterion and Goal 4 reworded.",
+      "ratified_via": "chat",
+      "resolution": "do we need the dry run? let's test the solution up front - not every time we copy a chat. we could simply find and confirm the source and target directories first if we need to.",
+      "recommendation_fork": {
+        "detected": true,
+        "source": "structured",
+        "options_presented": [
+          {
+            "label": "A",
+            "body": "Have --dry-run (or the plan) list every file to be moved."
+          },
+          {
+            "label": "B",
+            "body": "Keep the counts-only plan and reword the exit criterion."
+          }
+        ],
+        "chosen": "off-menu"
+      },
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/proposal.md",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/tasks.md",
+          "orbit/architecture/claude-chat-mover.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "prints the exact file set",
+          "`--dry-run` stops here",
+          "### Requirement: Plan and dry run",
+          "[--dry-run]",
+          "plan/dry run"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "### Requirement: Confirmation before copying"
+          },
+          {
+            "path": "orbit/architecture/claude-chat-mover.md",
+            "text": "R-claude-chat-mover-8"
+          }
+        ],
+        "searched": [
+          "dry run",
+          "dry-run",
+          "--dry-run",
+          "the plan"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "descope",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "cleanupPeriodDays guard runs after the code copy, so a code-copy failure skips it",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 22,
+      "classification": "trivial_fix",
+      "action": "Guard is now task 4.3, before the code copy (4.4); spec and D7 say 'before copying code'.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "Runs only after chat data is copied."
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "before the code copy, so a code-copy failure can't skip it"
+          }
+        ],
+        "searched": [
+          "after chat data",
+          "cleanupPeriodDays"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Preflight does not check the source's own tools",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 8,
+      "classification": "trivial_fix",
+      "action": "Task 2.1, D8, the preflight requirement and the proposal's Impact name rsync and python3 on the source.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/proposal.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "read `NEW_HOME`, check `rsync` on the target"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "`rsync` and `python3` on the source"
+          }
+        ],
+        "searched": [
+          "python3",
+          "rsync exists"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Missing and empty target settings.json are not handled",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 22,
+      "classification": "trivial_fix",
+      "action": "Missing or empty settings.json is {}; `ssh cat ... || true`; spec adds 'Missing settings'; only non-empty invalid JSON warns.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "creating the file if absent and preserving every other key"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "A missing or empty file SHALL be treated as `{}`"
+          }
+        ],
+        "searched": [
+          "settings.json",
+          "empty"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Project-argument resolution leaves three details open",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 4,
+      "classification": "trivial_fix",
+      "action": "No `/` means ~/code/<arg>; physical path via pwd -P; the folder must exist — in the spec selection requirement, D1 and task 1.2.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+          "orbit/changes/single-chat-move/design.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "bare name → `~/code/<name>`"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "pwd -P"
+          }
+        ],
+        "searched": [
+          "bare name",
+          "absolute"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Verification group skips several spec scenarios",
+      "marker_source": "internal-review",
+      "file": "tasks.md",
+      "line": 25,
+      "classification": "trivial_fix",
+      "action": "Added task 5.7 covering unknown project, outside-home, declined prompt, existing code kept, and the four settings cases.",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/tasks.md",
+            "text": "5.7 Error and edge paths"
+          }
+        ],
+        "searched": [
+          "Scenario:"
+        ],
+        "scope": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "The on-disk inventory does not say whether other session-keyed stores were ruled out",
+      "marker_source": "internal-review",
+      "file": "design.md",
+      "line": 3,
+      "classification": "trivial_fix",
+      "action": "Checked live ~/.claude: session-env/<uuid>/ is the only other uuid-keyed store (per-machine hook env); Context and the Chat contents requirement say it stays behind.",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/specs/chat-move/spec.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "session-env/<uuid>/"
+          }
+        ],
+        "searched": [
+          "session-env",
+          "uuid-keyed"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "D8 brackets --remote as optional though it is required",
+      "marker_source": "internal-review",
+      "file": "design.md",
+      "line": 55,
+      "classification": "trivial_fix",
+      "action": "D8 synopsis is `move-chat.sh <project> --remote HOST [--skip-code] [--yes]`.",
+      "ripple_cascade": {
+        "applied": [],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "`move-chat.sh <project> [--remote HOST]"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/design.md",
+            "text": "`move-chat.sh <project> --remote HOST [--skip-code] [--yes]`"
+          }
+        ],
+        "searched": [
+          "--remote HOST"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    },
+    {
+      "severity": "SUGGESTION",
+      "title": "Confirmation answer is 'yes' in the requirement but 'y' in the scenario",
+      "marker_source": "internal-review",
+      "file": "specs/chat-move/spec.md",
+      "line": 30,
+      "classification": "trivial_fix",
+      "action": "Accepted answers stated once: `y` or `Y` (spec requirement + scenario, D8, task 2.3).",
+      "ripple_cascade": {
+        "applied": [
+          "orbit/changes/single-chat-move/design.md",
+          "orbit/changes/single-chat-move/tasks.md"
+        ],
+        "flagged_not_applied": []
+      },
+      "sweep": {
+        "retired": [
+          "unless the answer is yes"
+        ],
+        "introduced": [
+          {
+            "path": "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+            "text": "the answer is `y` or `Y`"
+          }
+        ],
+        "searched": [
+          "answer",
+          "confirm"
+        ],
+        "scope": [],
+        "kept": []
+      },
+      "remedy": "repair",
+      "outcome": "resolved"
+    }
+  ],
+  "remaining_markers_in_scope": 0,
+  "persisted_escalations": [],
+  "final_assessment": "All 14 findings of the fresh proposal pass resolved: 11 obvious fixes, 3 decision-lane items (outside-home refused; dry-run mode dropped by user ruling R-claude-chat-mover-8; retention window computed from the oldest session).",
+  "iteration": 1,
+  "next_recommended": "/orbit:address-reviews single-chat-move",
+  "ripple_misses": 0
+}

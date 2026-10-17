@@ -1,0 +1,35 @@
+{
+  "command": "apply",
+  "timestamp": "2026-10-17T15:48:39Z",
+  "change": "single-chat-move",
+  "kind": "workflow",
+  "model": "claude-opus-5-5",
+  "user_validation_tasks": [
+    "5.3",
+    "5.4",
+    "5.5",
+    "5.6"
+  ],
+  "consent": "user-invoked",
+  "tasks_completed": 15,
+  "tasks_remaining": 4,
+  "user_validation_remaining": 4,
+  "chunk": null,
+  "chunk_name": null,
+  "chunk_complete": true,
+  "tasks_completed_this_session": 15,
+  "files_touched": [
+    "orbit/architecture/claude-chat-mover.md",
+    "orbit/changes/single-chat-move/.orbit-runs/external-prompt-proposal-2026-10-17T14-55-13Z.md",
+    "orbit/changes/single-chat-move/.orbit-runs/external-proposal-2026-10-17T14-59-36Z.md",
+    "orbit/changes/single-chat-move/.orbit-runs/review-external-2026-10-17T14-55-37Z.json",
+    "orbit/changes/single-chat-move/.orbit-runs/review-proposal-2026-10-17T14-59-14Z.json",
+    "orbit/changes/single-chat-move/design.md",
+    "orbit/changes/single-chat-move/proposal.md",
+    "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+    "orbit/changes/single-chat-move/tasks.md"
+  ],
+  "diff_base": "08a5752435be40f8d8c592a6fa10f69e095824e7",
+  "final_assessment": "15 of 19 tasks done. move-chat.sh and tests/test-move-chat.sh written; the local harness (fake ssh/rsync) passes 44/44 and was mutation-checked; 5.3-5.6 need the real Fedora desktop and Mac mini, which have no ssh entry on this Mac yet",
+  "next_recommended": "/orbit:review --as proposal --reviewer blind-pair single-chat-move"
+}

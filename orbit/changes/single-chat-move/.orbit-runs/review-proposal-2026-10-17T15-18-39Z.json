@@ -1,0 +1,173 @@
+{
+  "command": "review",
+  "timestamp": "2026-10-17T15:18:39Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "mode": "proposal",
+  "reviewer_class": "in-context",
+  "depth": "full",
+  "flags": {
+    "parallel": false,
+    "focus": null,
+    "strict": false,
+    "fresh": false,
+    "mark": false,
+    "skip_verify": false
+  },
+  "scorecard": {
+    "completeness": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 1
+    },
+    "correctness": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 1
+    },
+    "coherence": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    }
+  },
+  "findings": [
+    {
+      "pass": "2",
+      "severity": "SUGGESTION",
+      "dimension": "correctness",
+      "file": "tasks.md",
+      "line": 32,
+      "title": "Re-run test expects an unchanged target, but the retention window moves with session age",
+      "recommendation": "Task 5.6 says a re-run leaves the 'target unchanged'. Under the new retention rule (cleanupPeriodDays = max(existing, oldest age + 365)), a re-run on a later day computes a larger needed value and rewrites settings.json, which the No-overwrite requirement permits. Reword 5.6 to 'no chat data, file history or code copied, and those unchanged on the target' so it matches the spec's Re-run scenario.",
+      "walk_entry": {
+        "title": "A fixed 365-day retention window does not protect every moved session",
+        "file": "orbit/changes/single-chat-move/design.md"
+      }
+    },
+    {
+      "pass": "5",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "specs/chat-move/spec.md",
+      "line": 36,
+      "title": "'Directories shown' scenario assumes the target home without stating it",
+      "recommendation": "The scenario expects the target slug -home-sal-code-home-env, which holds only if the target's home is /home/sal; the WHEN clause names only `--remote fedora`. Add 'and the target home is /home/sal' to the WHEN so a test author need not infer it, as the Linux target scenario already does.",
+      "walk_entry": {
+        "title": "A counts-only plan cannot meet the stage's 'exact file set' exit criterion",
+        "file": "specs/chat-move/spec.md"
+      }
+    }
+  ],
+  "stale_suppressed": [],
+  "commentary": "Verified the two walks against the live artifacts and the architecture doc. Every edited file is in some entry's edit record, strict validation passes, and no markers remain. The resolutions are present at every site they claim; the retired wording (dry-run flag, fixed 365, outside-home --skip-code exception, counts-only plan) is gone from the change and the doc. The two residual nits are both second-order effects of this walk's own decisions: the computed retention window makes a re-run's settings write legitimate, which one test line still forbids, and the new confirmation scenario borrows an unstated target home. Neither changes the design.",
+  "passes_run": [
+    "1",
+    "2",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "passes_skipped": [
+    "3",
+    "4"
+  ],
+  "verification": [
+    {
+      "title": "'No overwrite on the target' contradicts the settings.json write",
+      "file": "specs/chat-move/spec.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Neither staging nor the rewrite says to preserve file mtimes",
+      "file": "design.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Code copy does not create the target project's parent directory",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "No target project path or NEW_SLUG for a project outside $HOME under --skip-code",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Spec's home-path boundary set omits the backslash that D3 includes",
+      "file": "specs/chat-move/spec.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "A counts-only plan cannot meet the stage's 'exact file set' exit criterion",
+      "file": "specs/chat-move/spec.md",
+      "verdict": "regressed"
+    },
+    {
+      "title": "cleanupPeriodDays guard runs after the code copy, so a code-copy failure skips it",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Preflight does not check the source's own tools",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Missing and empty target settings.json are not handled",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Project-argument resolution leaves three details open",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Verification group skips several spec scenarios",
+      "file": "tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "The on-disk inventory does not say whether other session-keyed stores were ruled out",
+      "file": "design.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "D8 brackets --remote as optional though it is required",
+      "file": "design.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Confirmation answer is 'yes' in the requirement but 'y' in the scenario",
+      "file": "specs/chat-move/spec.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Staging needs an explicit symlink policy",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "A fixed 365-day retention window does not protect every moved session",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "verdict": "regressed"
+    },
+    {
+      "title": "Verification does not cover both targets’ dry-run exit criterion",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "verdict": "landed"
+    }
+  ],
+  "final_assessment": "0 critical, 0 warning, 2 suggestion.",
+  "pass_genre": "VERIFICATION",
+  "verified_walks": [
+    "2026-10-17T15-16-42Z",
+    "2026-10-17T15-17-02Z"
+  ],
+  "iteration": 3,
+  "next_recommended": "/orbit:address-reviews single-chat-move"
+}
