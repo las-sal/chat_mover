@@ -64,6 +64,10 @@ command -v rsync   >/dev/null || die "rsync not found on this Mac."
 command -v python3 >/dev/null || die "python3 not found on this Mac (xcode-select --install)."
 NEW_HOME=$(ssh -o BatchMode=yes "$REMOTE" 'printf %s "$HOME"') \
   || die "Can't ssh to $REMOTE without a prompt. Run 'ssh $REMOTE' once so your key is loaded, then retry."
+# A shell startup file that prints for non-interactive ssh (e.g. a terminal-title
+# trap) would corrupt NEW_HOME -- and every rewritten path -- and breaks rsync.
+[[ "$NEW_HOME" =~ ^/[^[:cntrl:]]*$ ]] \
+  || die "$REMOTE's shell prints extra output for non-interactive ssh commands (\$HOME came back as $(printf %q "$NEW_HOME")). This breaks rsync and the path rewrite. Make its startup files print only in interactive shells (wrap that code in: if [[ \$- == *i* ]]; then ... fi), then retry."
 ssh -o BatchMode=yes "$REMOTE" 'command -v rsync >/dev/null' \
   || die "$REMOTE needs rsync (Fedora: sudo dnf install rsync)."
 if pgrep -x claude >/dev/null 2>&1; then

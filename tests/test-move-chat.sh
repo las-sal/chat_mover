@@ -26,6 +26,7 @@ cat > "$T/bin/ssh" <<'EOF'
 #!/usr/bin/env bash
 while [[ "$1" == -o ]]; do shift 2; done
 shift                                   # host
+[[ -n "${NOISY:-}" ]] && printf '\033]0;%s | ~\007' "${1%% *}"   # a title-setting shell rc
 cd "$TARGET_HOME" && HOME="$TARGET_HOME" exec bash -c "$*"
 EOF
 cat > "$T/bin/rsync" <<'EOF'
@@ -152,6 +153,10 @@ check "answer n: non-zero"          test "$RC" -ne 0
 check "answer n: nothing copied"    test ! -e "$T/dst4/.claude"
 run "$T/dst3" home-env
 check "missing --remote: non-zero"  test "$RC" -ne 0
+mkdir -p "$T/dst5"; RC=0; NOISY=1 HOME="$SRC_HOME" TARGET_HOME="$T/dst5" PATH="$T/bin:$PATH" "$SCRIPT" home-env --remote fake --yes >"$T/out" 2>&1 || RC=$?
+check "noisy remote shell: non-zero"     test "$RC" -ne 0
+check "noisy remote shell: explained"    out_has "prints extra output for non-interactive ssh"
+check "noisy remote shell: nothing copied" test ! -e "$T/dst5/.claude"
 
 echo
 echo "$PASS passed, $FAIL failed"

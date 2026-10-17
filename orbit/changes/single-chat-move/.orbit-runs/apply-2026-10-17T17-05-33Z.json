@@ -1,0 +1,37 @@
+{
+  "command": "apply",
+  "timestamp": "2026-10-17T17:05:33Z",
+  "change": "single-chat-move",
+  "kind": "workflow",
+  "model": "claude-opus-5-5",
+  "user_validation_tasks": [
+    "5.3",
+    "5.4",
+    "5.5",
+    "5.6"
+  ],
+  "consent": "user-invoked",
+  "tasks_completed": 17,
+  "tasks_remaining": 4,
+  "user_validation_remaining": 4,
+  "chunk": null,
+  "chunk_name": null,
+  "chunk_complete": true,
+  "tasks_completed_this_session": 2,
+  "files_touched": [
+    "move-chat.sh",
+    "orbit/architecture/claude-chat-mover.md",
+    "orbit/changes/single-chat-move/.orbit-runs/address-reviews-2026-10-17T15-16-42Z.json",
+    "orbit/changes/single-chat-move/.orbit-runs/address-reviews-2026-10-17T15-17-02Z.json",
+    "orbit/changes/single-chat-move/.orbit-runs/address-reviews-2026-10-17T15-19-36Z.json",
+    "orbit/changes/single-chat-move/.orbit-runs/apply-2026-10-17T15-48-39Z.json",
+    "orbit/changes/single-chat-move/.orbit-runs/review-proposal-2026-10-17T15-18-39Z.json",
+    "orbit/changes/single-chat-move/design.md",
+    "orbit/changes/single-chat-move/specs/chat-move/spec.md",
+    "orbit/changes/single-chat-move/tasks.md",
+    "tests/test-move-chat.sh"
+  ],
+  "diff_base": "f68b86dea6ae52de06cdfc14bedbb613619ada57",
+  "final_assessment": "17 of 21 tasks done. added the clean-remote-output preflight (2.4) and its harness case (5.8) after starlight's title-setting DEBUG trap was found corrupting non-interactive ssh output; harness 47/47, mutation-checked; starlight's prompt.sh fixed so it now passes; 5.3-5.6 remain for the real machines",
+  "next_recommended": "/orbit:review --as proposal --reviewer blind-pair single-chat-move"
+}

@@ -8,6 +8,7 @@
 - [x] 2.1 Preflight: `rsync` and `python3` on the source; `ssh -o BatchMode=yes` reachability with the seed's fix-it message; read `NEW_HOME`; `rsync` on the target; warn if a `claude` process is running locally
 - [x] 2.2 Compute `NEW_SLUG` from the target project path (`$NEW_HOME/<path relative to $HOME>`) and collect the chat: session uuids (`*.jsonl` directly in the slug dir) and existing `file-history/<uuid>` dirs (D5)
 - [x] 2.3 Print the source chat dir, target chat dir (`<host>:~/.claude/projects/$NEW_SLUG`), source/target project folders or "code skipped", the session count, and the note that already-copied transcripts are not updated on re-run; ask `Proceed? [y/N]` (`y`/`Y` only) unless `--yes` (D8)
+- [x] 2.4 Reject a target whose `$HOME` does not read back as a clean absolute path (no control characters): exit before copying, explaining that its shell prints output for non-interactive ssh and to guard that output with `[[ $- == *i* ]]`
 
 ## 3. Stage and rewrite
 
@@ -31,3 +32,4 @@
 - [ ] 5.5 Real move to the Mac mini: same checks as 5.3–5.4
 - [ ] 5.6 Re-run 5.3's move: no chat data, file history or code copied, and those unchanged on the target; source slug dir unchanged (compare checksums and mtimes before/after)
 - [x] 5.7 Error and edge paths: unknown project and a project outside `$HOME` exit non-zero with nothing copied; answering `n` at the prompt copies nothing; an existing different `~/code/<project>/README.md` on the target is kept; target `settings.json` absent, below the needed window, above it, and non-empty invalid JSON each behave per the Session retention requirement
+- [x] 5.8 Harness: a fake remote whose shell prints a title escape before every command makes the tool exit non-zero with the clean-output message and copy nothing

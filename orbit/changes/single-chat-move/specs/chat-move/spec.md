@@ -118,11 +118,15 @@ Directly after copying chat data and file history, and before copying code, the 
 - **THEN** the file is unchanged and a warning is printed
 
 ### Requirement: Preflight and target platforms
-Before any copy the tool SHALL verify that `rsync` and `python3` exist on the source, that it can reach the target with `ssh -o BatchMode=yes`, and that `rsync` exists on the target, and SHALL read the target's home directory. The tool SHALL require nothing on the target beyond `ssh`, `rsync` and a POSIX shell, and SHALL work for both a Fedora Linux target and a macOS target. When a `claude` process is running on the source the tool SHALL print a warning that transcripts may be incomplete.
+Before any copy the tool SHALL verify that `rsync` and `python3` exist on the source, that it can reach the target with `ssh -o BatchMode=yes`, and that `rsync` exists on the target, and SHALL read the target's home directory. The home directory SHALL read back as a clean absolute path — beginning with `/` and containing no control characters; anything else means the target's shell prints output for non-interactive ssh commands (which also breaks rsync), and the tool SHALL exit non-zero before copying anything, saying so and how to fix it. The tool SHALL require nothing on the target beyond `ssh`, `rsync` and a POSIX shell, and SHALL work for both a Fedora Linux target and a macOS target. When a `claude` process is running on the source the tool SHALL print a warning that transcripts may be incomplete.
 
 #### Scenario: Unreachable target
 - **WHEN** the target cannot be reached over ssh without a password prompt
 - **THEN** the tool exits non-zero with a message saying how to fix it, and nothing is copied
+
+#### Scenario: Noisy remote shell
+- **WHEN** the target's shell startup prints a terminal-title escape sequence for every command, so the home directory reads back as `\e]0;printf | /home/sal\a/home/sal`
+- **THEN** the tool exits non-zero naming the problem and the fix, and nothing is copied
 
 #### Scenario: macOS target
 - **WHEN** the target is a Mac with the default BSD userland
