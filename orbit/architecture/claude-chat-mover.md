@@ -42,7 +42,7 @@ Grounding — what a chat is on disk (observed 2026-10-16 on this MacBook, Claud
 ### Stage single-chat-move — Move one chat to a target machine
 
 Depends-on: (none)
-Complete: [ ]
+Complete: [x] 2026-10-17 (user)
 
 Charter: turn the seed example (which moves ALL projects plus global config and code) into a script that moves ONE chosen chat directory to a named target over ssh.
 
@@ -68,6 +68,14 @@ Exit criteria:
 
 _None open._ OQ-1..OQ-3 resolved 2026-10-16 by R-claude-chat-mover-5..7.
 
+- **OQ-4** (2026-10-17): should the tool say what it does NOT move? After the first move to moonlight, the target's AI listed the gaps it found in `move-tool-findings.md` in `~/code/home-env` on moonlight:
+  - no `~/.gitconfig` identity;
+  - the Codex plugin and the `codex` CLI were missing;
+  - a fresh global `settings.json`;
+  - missing dev toolchain, gh auth, Xcode license and signing.
+
+  All of these are global or machine state, which R-claude-chat-mover-7 keeps out of scope. Standing recommendation: keep R-7, and add about five lines to the script's closing "Next steps". These would list what was not moved, read from the MacBook: its `enabledPlugins`, the keys in its global `settings.json`, and its `~/.gitconfig`. Machine bootstrap (toolchain, gh auth, Xcode) belongs to a separate checklist, probably in `home-env`, not to this tool.
+
 ## Considered & out
 
 - **Moving all chats at once** (the seed example's behavior) — out by R-claude-chat-mover-1 (2026-10-16): one chat per run, nothing else analyzed.
@@ -85,3 +93,4 @@ _None open._ OQ-1..OQ-3 resolved 2026-10-16 by R-claude-chat-mover-5..7.
 - 2026-10-16 — OQ-1..OQ-3 resolved as R-claude-chat-mover-5..7; `single-chat-move` scope updated (exact slug match, code copy with `--skip-code`).
 - 2026-10-17 — R-claude-chat-mover-8 captured during the proposal-review walk of `single-chat-move` (dry-run mode dropped; up-front tests instead); stage scope, Goal 4 and exit criteria updated to match.
 - 2026-10-17 — R-claude-chat-mover-9 captured (target chosen per move; Apple/Swift → moonlight, general → starlight); mapping file deferred, auto-detection out. Real-machine tests retargeted to match: home-env → moonlight, orbit-spec → starlight.
+- 2026-10-17 — Stage `single-chat-move` ratified complete by the user after archive (`orbit/changes/archive/2026-10-17-single-chat-move`). Tested on both targets: home-env and home-env-test to moonlight, orbit-spec to starlight. The re-run no-op criterion rests on the harness and the home-env-test move rather than a real re-run (user's call). The system blind-pair review led to fixes at the remote boundary: in-place settings write, quoted code destination, and a note when the target chat already exists. `orbit/specs/chat-move/spec.md` is now baseline. The program has no further stage declared.
