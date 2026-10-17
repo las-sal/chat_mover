@@ -1,0 +1,208 @@
+{
+  "command": "review",
+  "timestamp": "2026-10-17T14:59:14Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "mode": "proposal",
+  "reviewer_class": "fresh",
+  "depth": "full",
+  "flags": {
+    "parallel": false,
+    "focus": null,
+    "strict": false,
+    "fresh": true,
+    "mark": false,
+    "skip_verify": false
+  },
+  "scorecard": {
+    "completeness": {
+      "critical": 0,
+      "warning": 4,
+      "suggestion": 5
+    },
+    "correctness": {
+      "critical": 0,
+      "warning": 2,
+      "suggestion": 1
+    },
+    "coherence": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 2
+    }
+  },
+  "findings": [
+    {
+      "pass": "2",
+      "severity": "WARNING",
+      "dimension": "correctness",
+      "file": "specs/chat-move/spec.md",
+      "line": 75,
+      "title": "'No overwrite on the target' contradicts the settings.json write",
+      "recommendation": "spec.md:75 says the tool SHALL NOT overwrite 'any existing file on the target', and proposal.md:14 says it 'never overwrites anything on the target'. But the Session retention requirement (spec.md:86) and D7 (design.md:52) rewrite an existing ~/.claude/settings.json. Taken literally, an implementer cannot satisfy both. Limit the No-overwrite requirement to moved chat data, file history and code, and name the one-key cleanupPeriodDays edit as the only allowed write to an existing target file. Make the same change in proposal.md:14.",
+      "reproduction": "Target has ~/.claude/settings.json with cleanupPeriodDays: 30. Per spec.md:86 the tool must write the file back with 365, which is the overwrite of an existing target file that spec.md:75 forbids."
+    },
+    {
+      "pass": "5",
+      "severity": "WARNING",
+      "dimension": "completeness",
+      "file": "design.md",
+      "line": 36,
+      "title": "Neither staging nor the rewrite says to preserve file mtimes",
+      "recommendation": "Almost every transcript contains the home path, so the D3 rewrite rewrites nearly every file, and a plain write stamps each one with the current mtime. The staging copy in task 3.1 also names no copy mode (cp -R vs cp -Rp). The architecture doc (claude-chat-mover.md:53) assumes the moved sessions 'keep their original mtimes', and anything on the target that reads file times (session age for cleanup, recency in the resume list) would see every moved session as just-modified. Add to D3 and tasks 3.1/3.2: copy into staging with times preserved (cp -Rp or a local rsync -a), and restore each rewritten file's atime/mtime with os.utime after the write. Extend the 5.2 fixture to check that mtimes are unchanged."
+    },
+    {
+      "pass": "6",
+      "severity": "WARNING",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 19,
+      "title": "Code copy does not create the target project's parent directory",
+      "recommendation": "Task 4.1 runs mkdir -p only for ~/.claude/projects and ~/.claude/file-history. Task 4.3 / D6 rsync the project to '<path relative to home>/' (e.g. code/home-env/). rsync creates only the last path component (this Mac's openrsync is 2.6.9-compatible and has no --mkpath), so on a target without ~/code the code copy fails after the chat data has already landed. Add the project's parent directory (dirname of the target project path) to the mkdir -p in 4.1."
+    },
+    {
+      "pass": "5",
+      "severity": "WARNING",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 9,
+      "title": "No target project path or NEW_SLUG for a project outside $HOME under --skip-code",
+      "recommendation": "Task 2.2 computes NEW_SLUG from '$NEW_HOME/<path relative to $HOME>', and D6 (design.md:49) says a project outside $HOME 'has no meaningful target path'. Yet tasks 1.2 and spec.md:60 accept such a project when --skip-code is given. Then neither the target slug, nor what the plan prints as the target project path, nor where `claude --resume` should be run is defined. Pick one of the options below and state it in spec.md:60 and D6.",
+      "recommendation_options": [
+        {
+          "label": "A",
+          "body": "Refuse any project outside $HOME, even with --skip-code (R-claude-chat-mover-5 defines the unit as a folder under ~/code). Simplest; drop the --skip-code exception from spec.md:60, D6 and task 1.2."
+        },
+        {
+          "label": "B",
+          "body": "Keep the absolute project path unchanged on the target (target project path = source path, NEW_SLUG = OLD_SLUG; the home rewrite still applies to other paths). Say this in spec.md and add a plan line that shows it."
+        }
+      ]
+    },
+    {
+      "pass": "2",
+      "severity": "WARNING",
+      "dimension": "correctness",
+      "file": "specs/chat-move/spec.md",
+      "line": 41,
+      "title": "Spec's home-path boundary set omits the backslash that D3 includes",
+      "recommendation": "spec.md:41 rewrites the home path only 'when followed by `/`, a quote, whitespace, or end of text'. D3 (design.md:37) and task 3.2 also accept a following `\\`. In JSONL that matters: a home path at the end of a string value that holds an escaped newline or escaped quote (e.g. `/Users/sal\\n`, `/Users/sal\\\"`) is followed by a backslash, so an implementer working from the spec alone leaves it unrewritten. Add the backslash to the spec's list and spell out 'a quote' as both `\"` and `'`. Optionally add a scenario for an escaped-newline occurrence."
+    },
+    {
+      "pass": "2",
+      "severity": "WARNING",
+      "dimension": "completeness",
+      "file": "specs/chat-move/spec.md",
+      "line": 30,
+      "title": "A counts-only plan cannot meet the stage's 'exact file set' exit criterion",
+      "recommendation": "The stage's exit criterion (claude-chat-mover.md:59) is that 'a dry run against each target prints the exact file set for the chosen chat', and task 5.3 checks that the plan 'lists only -Users-sal-code-home-env content'. The Plan requirement (spec.md:30) asks only for counts and sizes, which makes the Prefix-sibling scenario's 'no file ... appears in the plan' (spec.md:12) true for any implementation and so tests nothing. Decide between the options below and align spec.md:30, task 2.3 and task 5.3.",
+      "recommendation_options": [
+        {
+          "label": "A",
+          "body": "Have --dry-run (or the plan) list every file to be moved, e.g. via `rsync -n -v` from the staging source and the file-history dirs, so 5.3 and the exit criterion can be checked from the output."
+        },
+        {
+          "label": "B",
+          "body": "Keep the counts-only plan, and reword the exit criterion and task 5.3 to check counts plus the source slug directory name, dropping 'exact file set'."
+        }
+      ]
+    },
+    {
+      "pass": "6",
+      "severity": "SUGGESTION",
+      "dimension": "correctness",
+      "file": "tasks.md",
+      "line": 22,
+      "title": "cleanupPeriodDays guard runs after the code copy, so a code-copy failure skips it",
+      "recommendation": "The task order is 4.1/4.2 (chat data and file history), then 4.3 (code), then 4.4 (guard). Under set -euo pipefail, any failure in 4.3 (a missing parent directory, disk full, a permission error) exits before 4.4. The moved sessions then sit on the target under its default cleanup window until the user re-runs. spec.md:86 only requires the guard 'after copying chat data', so move 4.4 to run directly after 4.2, before the code copy."
+    },
+    {
+      "pass": "2",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 8,
+      "title": "Preflight does not check the source's own tools",
+      "recommendation": "spec.md:97 requires checking that rsync exists 'on both machines', but task 2.1 checks it only on the target. D3 and D7 also need python3 on the source (design.md:36 says it is 'present on this Mac'), and neither the spec nor task 2.1 checks for it. Add `command -v rsync` and `command -v python3` on the source to task 2.1 (the seed already checks rsync locally at migrate-claude-to-starlight.sh:50), and list python3 as a source requirement in the spec."
+    },
+    {
+      "pass": "6",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 22,
+      "title": "Missing and empty target settings.json are not handled",
+      "recommendation": "spec.md:86 says to create the file if it is absent. But the planned `ssh cat` of a missing file exits non-zero, and under set -e that kills the script unless it is handled. An empty file is also not valid JSON, so by spec.md:86 it would be left alone with a warning, while the seed (migrate-claude-to-starlight.sh:141) treats an empty file as {}. State in D7/task 4.4: absent means start from {}; empty also means {} (or explicitly, a warning)."
+    },
+    {
+      "pass": "5",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 4,
+      "title": "Project-argument resolution leaves three details open",
+      "recommendation": "Three things are undefined. (1) What counts as a 'bare name': no `/` in the argument? (2) How the path is made absolute: logical (`pwd`) or physical (`pwd -P`). The slug depends on matching the cwd Claude Code recorded, so a symlinked ~/code gives a different slug. (3) Whether the project folder must exist when --skip-code is given (a chat whose folder was deleted locally). Pin all three in task 1.2 and the Chat selection requirement."
+    },
+    {
+      "pass": "2",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "tasks.md",
+      "line": 25,
+      "title": "Verification group skips several spec scenarios",
+      "recommendation": "Group 5 covers the exit criteria. These scenarios have no check: Unknown project, Declined confirmation, Project outside home, Existing code kept, Low cleanup window raised, and Unparseable settings. Most can be checked cheaply against a scratch target directory or a throwaway settings.json. Add one task that runs them, or say explicitly that they are left to inspection."
+    },
+    {
+      "pass": "6",
+      "severity": "SUGGESTION",
+      "dimension": "completeness",
+      "file": "design.md",
+      "line": 3,
+      "title": "The on-disk inventory does not say whether other session-keyed stores were ruled out",
+      "recommendation": "The chat's footprint comes from the architecture Premise survey: the slug dir plus file-history/<uuid>, with a listed set of transient directories. It does not say whether any other ~/.claude store keyed by session uuid was checked and ruled out, either as part of the chat or as transient. (This review could not inspect ~/.claude to confirm either way.) Add one sentence to the Context saying the survey checked for other uuid-keyed directories, and have task 5.4 confirm that a resumed session shows no missing state."
+    },
+    {
+      "pass": "9",
+      "severity": "SUGGESTION",
+      "dimension": "coherence",
+      "file": "design.md",
+      "line": 55,
+      "title": "D8 brackets --remote as optional though it is required",
+      "recommendation": "D8 writes `[--remote HOST]` and then says it is required. proposal.md:9 and task 1.1 treat it as required. Drop the brackets in D8 so the synopsis matches."
+    },
+    {
+      "pass": "9",
+      "severity": "SUGGESTION",
+      "dimension": "coherence",
+      "file": "specs/chat-move/spec.md",
+      "line": 30,
+      "title": "Confirmation answer is 'yes' in the requirement but 'y' in the scenario",
+      "recommendation": "The requirement says to abort 'unless the answer is yes', while the Declined confirmation scenario (spec.md:37) aborts on 'anything other than `y`'. The seed's regex `^[Yy]$` would reject a typed 'yes'. State the accepted answers once (e.g. y or Y; optionally yes)."
+    }
+  ],
+  "stale_suppressed": [],
+  "commentary": "The design is sound and well grounded. It fixes each seed defect it names: prefix glob, remote GNU sed, missing file-history, and the home-only rewrite. The staging-then-rsync choice cleanly removes the double-rewrite and BSD/GNU problems. The findings cluster in two places. First, edges around the transfer: what is preserved besides content (mtimes), what has to exist on the target first (the project's parent directory), and what order the writes run in (the guard after the code copy). Second, small mismatches between spec and design (the boundary set, the plan's file set, the outside-$HOME case) where an implementer working from only one document would build something different. Probed: the slug-replace ordering argument in D3, including the home-env / home-env-test substring case, which holds up; openrsync's flag support on this Mac (it has --ignore-existing and --exclude but no --mkpath); and the seed script line by line against D2-D8. Not probed: the live ~/.claude layout, which this pass could not read.",
+  "passes_run": [
+    "1",
+    "2",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "passes_skipped": [
+    "3",
+    "4"
+  ],
+  "direction": {
+    "disposition": "hold",
+    "reasoning": "Resolve the spec-level gaps before apply, with no redesign. Three of them would make two implementations differ in ways that matter on the target: mtime preservation through staging and rewrite, the target path for a project outside home, and whether the dry-run plan lists files. The settings.json wording contradiction is a one-sentence carve-out. Every fix is local to a requirement or a task line, and the decisions D1-D8 stand as written."
+  },
+  "final_assessment": "0 critical, 6 warning, 8 suggestion.",
+  "pass_genre": "REVIEW",
+  "verified_walks": [],
+  "iteration": 1,
+  "next_recommended": "/orbit:address-reviews single-chat-move"
+}
