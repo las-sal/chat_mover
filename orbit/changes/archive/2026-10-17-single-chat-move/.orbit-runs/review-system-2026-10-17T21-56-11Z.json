@@ -1,0 +1,99 @@
+{
+  "command": "review",
+  "timestamp": "2026-10-17T21:56:11Z",
+  "change": "single-chat-move",
+  "kind": "editorial",
+  "model": "claude-opus-5-5",
+  "mode": "system",
+  "reviewer_class": "in-context",
+  "depth": "full",
+  "flags": {
+    "parallel": false,
+    "focus": null,
+    "strict": false,
+    "fresh": false,
+    "mark": false,
+    "skip_verify": false
+  },
+  "scorecard": {
+    "completeness": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "correctness": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "coherence": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    }
+  },
+  "findings": [],
+  "stale_suppressed": [],
+  "commentary": "Verified the two walks against commit af27c00 and the live tree. Each resolved edit is present at every site its entry claims: move-chat.sh (in-place settings write, guarded read with an UNREADABLE branch, rq-quoted code destination, existing-target note), the spec's three requirement edits and four new scenarios, D6/D7/D8 and the Risks line, tasks 2.3/4.3/4.4/5.6/5.9, and the proposal's Impact line. The harness was re-run here: all checks pass, and the walk's mutation results (old quoting, temp+mv write, swallowed read error each fail the new checks) match the code as committed. The residual diff from the codex return's commit touches only files inside the walks' edit records.\n\nProbed and not flagged: the new remote commands (test -d, [ ! -e ] || cat, cat >) stay POSIX, keeping the ssh + rsync + POSIX shell target requirement; a failed test -d reads as 'not present', which only drops the note. The rq quoting assumes the source rsync passes remote paths to the target shell unprotected, which holds for the Mac's /usr/bin/rsync (openrsync, protocol 29, the only rsync on PATH) and is named in D6; an rsync 3.2.4+ on the source protects arguments itself and would double-escape a name with spaces, so revisit D6 if the source rsync ever changes. The write is not atomic, an accepted trade-off D7 now states.\n\nPass 0 and Pass 6 are whole-change passes and were not run in this verification pass; Pass 1 had no baseline specs and Passes 4-5 no lens files.",
+  "passes_run": [
+    "2",
+    "3"
+  ],
+  "passes_skipped": [
+    "0",
+    "1",
+    "4",
+    "5",
+    "6"
+  ],
+  "verification": [
+    {
+      "title": "settings.json write-back replaces the target file: mode widens 600 -> 644 and a symlinked settings.json is detached",
+      "file": "move-chat.sh",
+      "verdict": "landed"
+    },
+    {
+      "title": "Code-copy rsync destination is not quoted for the remote shell; a project path with a space fails after the chat is already copied",
+      "file": "move-chat.sh",
+      "verdict": "landed"
+    },
+    {
+      "title": "Confirmation does not say when the target chat directory already exists, so a merge into an existing chat is silent",
+      "file": "move-chat.sh",
+      "verdict": "landed"
+    },
+    {
+      "title": "Task 5.6 is checked although its stated procedure (a real re-run to moonlight with checksum comparison) was not performed",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Touchpoints and the proposal's Impact omit the new test harness tests/test-move-chat.sh",
+      "file": "orbit/changes/single-chat-move/design.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Scenario coverage is absent from the scenario map",
+      "file": "orbit/changes/single-chat-move/tasks.md",
+      "verdict": "landed"
+    },
+    {
+      "title": "Settings read errors are treated as missing settings",
+      "file": "move-chat.sh",
+      "verdict": "landed"
+    },
+    {
+      "title": "Concurrent moves can lose settings or fail after transferring chat data",
+      "file": "move-chat.sh",
+      "verdict": "landed"
+    }
+  ],
+  "final_assessment": "No findings.",
+  "pass_genre": "VERIFICATION",
+  "verified_walks": [
+    "2026-10-17T21-47-42Z",
+    "2026-10-17T21-48-01Z"
+  ],
+  "iteration": 3,
+  "next_recommended": "orbit status --change single-chat-move --report"
+}
